@@ -64,14 +64,14 @@ export default async function ReminderDetailPage({ params }: { params: Promise<{
             <Button asChild>
               <Link href={`/reminders/${reminder.id}/edit`}>Edit</Link>
             </Button>
-            <form action={markReminderStatusAction.bind(null, reminder.id, ReminderStatus.COMPLETED)}>
+            <form action={markReminderStatusAction.bind(null, reminder.id, ReminderStatus.COMPLETED, `/reminders/${reminder.id}`)}>
               <Button variant="secondary">Mark as completed</Button>
             </form>
             <RenewDialog reminderId={reminder.id} />
-            <form action={markReminderStatusAction.bind(null, reminder.id, ReminderStatus.ARCHIVED)}>
+            <form action={markReminderStatusAction.bind(null, reminder.id, ReminderStatus.ARCHIVED, `/reminders/${reminder.id}`)}>
               <Button variant="outline">Archive</Button>
             </form>
-            <form action={deleteReminderAction.bind(null, reminder.id)}>
+            <form action={deleteReminderAction.bind(null, reminder.id, "/reminders")}>
               <Button variant="destructive">Delete</Button>
             </form>
           </div>

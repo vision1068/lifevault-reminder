@@ -37,7 +37,7 @@ export default async function HistoryPage() {
               <Button asChild variant="outline">
                 <Link href={`/reminders/${reminder.id}`}>View</Link>
               </Button>
-              <form action={markReminderActiveAction.bind(null, reminder.id)}>
+              <form action={markReminderActiveAction.bind(null, reminder.id, "/history")}>
                 <Button variant="secondary">Restore to active</Button>
               </form>
             </CardContent>

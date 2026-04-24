@@ -9,7 +9,7 @@ export function ReminderFilters({
   categories,
   searchParams
 }: {
-  categories: Category[];
+  categories: Pick<Category, "id" | "name">[];
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const value = (key: string) => {
@@ -68,7 +68,7 @@ export function ReminderFilters({
         <Button type="submit" className="flex-1">
           Apply filters
         </Button>
-        <Button type="reset" variant="outline" className="flex-1" asChild>
+        <Button type="button" variant="outline" className="flex-1" asChild>
           <Link href="/reminders">Reset</Link>
         </Button>
       </div>

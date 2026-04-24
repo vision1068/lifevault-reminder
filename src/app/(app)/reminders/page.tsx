@@ -16,7 +16,11 @@ export default async function RemindersPage({
   const user = await requireUser();
   const params = await searchParams;
   const [categories, reminders] = await Promise.all([
-    db.category.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } }),
+    db.category.findMany({
+      where: { userId: user.id },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true }
+    }),
     getRemindersForList({ userId: user.id, searchParams: params })
   ]);
 

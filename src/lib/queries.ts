@@ -82,6 +82,8 @@ export async function getDashboardData(userId: string) {
 
 export async function getRemindersForList({ userId, searchParams }: ReminderFilterInput) {
   const today = new Date();
+  const todayStart = startOfDay(today);
+  const todayEnd = endOfDay(today);
   const search = parseSearchParam(searchParams?.search);
   const categoryId = parseSearchParam(searchParams?.category);
   const priority = parseSearchParam(searchParams?.priority);
@@ -92,6 +94,64 @@ export async function getRemindersForList({ userId, searchParams }: ReminderFilt
   const quick = parseSearchParam(searchParams?.quick);
   const dateFrom = parseSearchParam(searchParams?.dateFrom);
   const dateTo = parseSearchParam(searchParams?.dateTo);
+
+  let quickWhere: Prisma.ReminderItemWhereInput = {};
+
+  switch (quick) {
+    case "dueToday":
+      quickWhere = {
+        status: ReminderStatus.ACTIVE,
+        mainDate: {
+          gte: todayStart,
+          lte: todayEnd
+        }
+      };
+      break;
+    case "upcoming7":
+      quickWhere = {
+        status: ReminderStatus.ACTIVE,
+        mainDate: {
+          gt: todayEnd,
+          lte: endOfDay(addDays(todayStart, 7))
+        }
+      };
+      break;
+    case "upcoming15":
+      quickWhere = {
+        status: ReminderStatus.ACTIVE,
+        mainDate: {
+          gt: todayEnd,
+          lte: endOfDay(addDays(todayStart, 15))
+        }
+      };
+      break;
+    case "upcoming30":
+      quickWhere = {
+        status: ReminderStatus.ACTIVE,
+        mainDate: {
+          gt: todayEnd,
+          lte: endOfDay(addDays(todayStart, 30))
+        }
+      };
+      break;
+    case "overdue":
+      quickWhere = {
+        status: ReminderStatus.ACTIVE,
+        mainDate: {
+          lt: todayStart
+        }
+      };
+      break;
+    case "highPriority":
+      quickWhere = {
+        priority: {
+          in: ["HIGH", "CRITICAL"]
+        }
+      };
+      break;
+    default:
+      quickWhere = {};
+  }
 
   const where: Prisma.ReminderItemWhereInput = {
     userId,
@@ -116,7 +176,8 @@ export async function getRemindersForList({ userId, searchParams }: ReminderFilt
             ...(dateTo ? { lte: endOfDay(new Date(dateTo)) } : {})
           }
         }
-      : {})
+      : {}),
+    ...quickWhere
   };
 
   const orderBy: Prisma.ReminderItemOrderByWithRelationInput =
@@ -150,28 +211,7 @@ export async function getRemindersForList({ userId, searchParams }: ReminderFilt
     orderBy
   });
 
-  const filtered = reminders.filter((item) => {
-    const metrics = getReminderMetrics(item.mainDate, item.status, today);
-
-    switch (quick) {
-      case "dueToday":
-        return metrics.isDueToday;
-      case "upcoming7":
-        return metrics.isUpcoming7Days;
-      case "upcoming15":
-        return metrics.isUpcoming15Days;
-      case "upcoming30":
-        return metrics.isUpcoming30Days;
-      case "overdue":
-        return metrics.isOverdue;
-      case "highPriority":
-        return item.priority === "HIGH" || item.priority === "CRITICAL";
-      default:
-        return true;
-    }
-  });
-
-  return filtered;
+  return reminders;
 }
 
 export async function getHistoryItems(userId: string) {

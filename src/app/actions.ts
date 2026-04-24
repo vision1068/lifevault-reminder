@@ -310,7 +310,11 @@ export async function saveReminderAction(_: ActionState, formData: FormData): Pr
   };
 }
 
-export async function markReminderStatusAction(reminderId: string, status: ReminderStatus) {
+export async function markReminderStatusAction(
+  reminderId: string,
+  status: ReminderStatus,
+  redirectTo = "/reminders"
+) {
   const user = await requireUser();
 
   try {
@@ -335,9 +339,11 @@ export async function markReminderStatusAction(reminderId: string, status: Remin
   revalidatePath("/dashboard");
   revalidatePath("/reminders");
   revalidatePath("/history");
+  revalidatePath(redirectTo);
+  redirect(redirectTo);
 }
 
-export async function deleteReminderAction(reminderId: string) {
+export async function deleteReminderAction(reminderId: string, redirectTo = "/reminders") {
   const user = await requireUser();
 
   try {
@@ -358,7 +364,8 @@ export async function deleteReminderAction(reminderId: string) {
   revalidatePath("/reminders");
   revalidatePath("/calendar");
   revalidatePath("/history");
-  redirect("/reminders");
+  revalidatePath(redirectTo);
+  redirect(redirectTo);
 }
 
 export async function renewReminderAction(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -453,7 +460,7 @@ export async function updateProfileAction(_: ActionState, formData: FormData): P
   };
 }
 
-export async function markReminderActiveAction(reminderId: string) {
+export async function markReminderActiveAction(reminderId: string, redirectTo = "/history") {
   const user = await requireUser();
 
   try {
@@ -478,4 +485,6 @@ export async function markReminderActiveAction(reminderId: string) {
 
   revalidatePath("/history");
   revalidatePath("/reminders");
+  revalidatePath(redirectTo);
+  redirect(redirectTo);
 }
