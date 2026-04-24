@@ -1,19 +1,35 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NotificationSettingsForm } from "@/components/notification-settings-form";
+import { requireUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 
 const futureItems = [
-  ["Email reminders", "Coming soon"],
   ["PWA browser notifications", "Coming soon"],
   ["WhatsApp reminders", "Future idea"],
   ["Google Calendar sync", "Future idea"]
 ];
 
-export default function NotificationSettingsPage() {
+export default async function NotificationSettingsPage() {
+  const user = await requireUser();
+  const preference = await db.notificationPreference.findUnique({
+    where: { userId: user.id },
+    select: { emailEnabled: true }
+  });
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Notification settings</h1>
-        <p className="text-sm text-[var(--muted-foreground)]">MVP placeholder for future reminder delivery channels.</p>
+        <p className="text-sm text-[var(--muted-foreground)]">Control how LifeVault sends reminder notifications.</p>
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Live channels</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <NotificationSettingsForm email={user.email} emailEnabled={preference?.emailEnabled ?? false} />
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Planned options</CardTitle>

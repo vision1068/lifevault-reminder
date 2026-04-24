@@ -79,6 +79,7 @@ pnpm dev
 - History/archive view
 - Notification settings placeholder page
 - Responsive layout with light/dark mode
+- SMTP-based email reminders with general reminder template
 
 ## Database workflow
 
@@ -95,6 +96,35 @@ pnpm dev
 - `pnpm prisma:generate` - generate Prisma client
 - `pnpm prisma:migrate --name init` - create/update local migration
 - `pnpm prisma:seed` - seed optional demo data
+
+## Email reminders
+
+Email reminders are provider-neutral and use SMTP, so you can plug in Gmail SMTP, Resend SMTP, Zoho, Mailgun SMTP, or another SMTP-compatible provider.
+
+Add these environment variables:
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `EMAIL_FROM`
+- `CRON_SECRET`
+
+Enable email reminders from the in-app Notification Settings page.
+
+To process due reminders automatically, call:
+
+```bash
+GET /api/cron/email-reminders
+```
+
+with either:
+
+- `Authorization: Bearer YOUR_CRON_SECRET`
+- or `x-cron-secret: YOUR_CRON_SECRET`
+
+The route sends a general reminder email when a reminder reaches one of its configured reminder-before days.
 
 ## Supabase setup notes
 

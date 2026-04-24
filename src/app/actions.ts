@@ -8,7 +8,14 @@ import { redirect } from "next/navigation";
 import { clearSession, createSession, requireUser } from "@/lib/auth";
 import { ensureDefaultCategories } from "@/lib/category-service";
 import { db } from "@/lib/db";
-import { authSchema, categorySchema, profileSchema, reminderSchema, renewSchema } from "@/lib/schemas";
+import {
+  authSchema,
+  categorySchema,
+  notificationPreferencesSchema,
+  profileSchema,
+  reminderSchema,
+  renewSchema
+} from "@/lib/schemas";
 
 type ActionState = {
   success?: boolean;
@@ -458,6 +465,38 @@ export async function updateProfileAction(_: ActionState, formData: FormData): P
   return {
     success: true,
     message: "Profile updated."
+  };
+}
+
+export async function updateNotificationSettingsAction(
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  const parsed = notificationPreferencesSchema.safeParse({
+    emailEnabled: formData.get("emailEnabled") === "on"
+  });
+
+  if (!parsed.success) {
+    return validationError(parsed.error);
+  }
+
+  await db.notificationPreference.upsert({
+    where: { userId: user.id },
+    update: {
+      emailEnabled: parsed.data.emailEnabled
+    },
+    create: {
+      userId: user.id,
+      emailEnabled: parsed.data.emailEnabled
+    }
+  });
+
+  revalidatePath("/notification-settings");
+
+  return {
+    success: true,
+    message: parsed.data.emailEnabled ? "Email reminders enabled." : "Email reminders disabled."
   };
 }
 

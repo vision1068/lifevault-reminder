@@ -46,3 +46,7 @@ export const profileSchema = z.object({
   name: z.string().min(2, "Name is required.").max(80),
   email: z.email("Enter a valid email address.")
 });
+
+export const notificationPreferencesSchema = z.object({
+  emailEnabled: z.boolean().default(false)
+});
