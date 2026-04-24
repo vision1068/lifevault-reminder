@@ -41,13 +41,15 @@ export async function getDashboardData(userId: string) {
     orderBy: { mainDate: "asc" }
   });
 
-  const active = reminders.filter((item) => item.status === ReminderStatus.ACTIVE);
-  const dueToday = active.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isDueToday);
-  const upcoming7 = active.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isUpcoming7Days);
-  const upcoming15 = active.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isUpcoming15Days);
-  const upcoming30 = active.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isUpcoming30Days);
-  const overdue = active.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isOverdue);
-  const highPriority = active.filter(
+  const actionable = reminders.filter(
+    (item) => item.status === ReminderStatus.ACTIVE || item.status === ReminderStatus.RENEWED
+  );
+  const dueToday = actionable.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isDueToday);
+  const upcoming7 = actionable.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isUpcoming7Days);
+  const upcoming15 = actionable.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isUpcoming15Days);
+  const upcoming30 = actionable.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isUpcoming30Days);
+  const overdue = actionable.filter((item) => getReminderMetrics(item.mainDate, item.status, today).isOverdue);
+  const highPriority = actionable.filter(
     (item) => item.priority === "HIGH" || item.priority === "CRITICAL"
   );
   const renewed = reminders
@@ -68,7 +70,7 @@ export async function getDashboardData(userId: string) {
       upcoming30: upcoming30.length,
       overdue: overdue.length,
       highPriority: highPriority.length,
-      totalActive: active.length
+      totalActive: actionable.length
     },
     categorySummary: Object.entries(categorySummary).map(([name, value]) => ({
       name,
