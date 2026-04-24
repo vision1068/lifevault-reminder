@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum DateType {
+  EXPIRY_DATE
+  EVENT_DATE
+  DUE_DATE
+  RENEWAL_DATE
+  SERVICE_DATE
+  APPOINTMENT_DATE
+  CUSTOM
+}
+
+enum RepeatType {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ReminderStatus {
+  ACTIVE
+  COMPLETED
+  RENEWED
+  EXPIRED
+  ARCHIVED
+}
+
+model User {
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  name                    String?
+  passwordHash            String
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  categories              Category[]
+  reminders               ReminderItem[]
+  notificationPreference  NotificationPreference?
+  notificationLogs        NotificationLog[]
+}
+
+model Category {
+  id          String         @id @default(cuid())
+  userId      String
+  name        String
+  iconName    String
+  color       String
+  description String?
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders   ReminderItem[]
+
+  @@unique([userId, name])
+  @@unique([id, userId])
+}
+
+model ReminderItem {
+  id                    String           @id @default(cuid())
+  userId                String
+  categoryId            String
+  title                 String
+  personName            String?
+  vehicleName           String?
+  mainDate              DateTime
+  dateType              DateType
+  reminderBeforeDays    Json
+  repeat                RepeatType       @default(NONE)
+  priority              Priority         @default(MEDIUM)
+  status                ReminderStatus   @default(ACTIVE)
+  notes                 String?
+  amount                Float?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  completedAt           DateTime?
+  archivedAt            DateTime?
+  category              Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  user                  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  renewalHistoryEntries RenewalHistory[]
+
+  @@index([userId, mainDate])
+  @@index([userId, status])
+  @@index([userId, priority])
+  @@unique([id, userId])
+}
+
+model RenewalHistory {
+  id             String       @id @default(cuid())
+  reminderItemId String
+  oldDate        DateTime
+  newDate        DateTime
+  renewedOn      DateTime     @default(now())
+  notes          String?
+  reminderItem   ReminderItem @relation(fields: [reminderItemId], references: [id], onDelete: Cascade)
+
+  @@index([reminderItemId, renewedOn])
+}
+
+model NotificationPreference {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  emailEnabled           Boolean  @default(false)
+  pushEnabled            Boolean  @default(false)
+  whatsappEnabled        Boolean  @default(false)
+  googleCalendarEnabled  Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationLog {
+  id           String   @id @default(cuid())
+  userId       String
+  reminderId   String?
+  channel      String
+  status       String
+  attemptedAt  DateTime @default(now())
+  message      String?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, attemptedAt])
+}

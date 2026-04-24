@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f8fc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #e8edf6;
+  --muted-foreground: #5b667a;
+  --border: rgba(148, 163, 184, 0.25);
+  --input: rgba(255, 255, 255, 0.9);
+  --primary: #0f766e;
+  --primary-foreground: #f8fafc;
+  --secondary: #eff6ff;
+  --secondary-foreground: #0f172a;
+  --accent: #e2f6f4;
+  --accent-foreground: #0b3d38;
+  --ring: rgba(15, 118, 110, 0.35);
+  --shadow-soft: 0 18px 50px -28px rgba(15, 23, 42, 0.45);
+}
+
+.dark {
+  --background: #09101d;
+  --foreground: #eff6ff;
+  --card: rgba(12, 20, 35, 0.92);
+  --card-foreground: #eff6ff;
+  --muted: rgba(30, 41, 59, 0.72);
+  --muted-foreground: #a7b4c7;
+  --border: rgba(148, 163, 184, 0.16);
+  --input: rgba(17, 24, 39, 0.84);
+  --primary: #5eead4;
+  --primary-foreground: #042f2e;
+  --secondary: rgba(15, 23, 42, 0.88);
+  --secondary-foreground: #eff6ff;
+  --accent: rgba(13, 148, 136, 0.18);
+  --accent-foreground: #d5fffa;
+  --ring: rgba(94, 234, 212, 0.28);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(45, 212, 191, 0.15), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.12), transparent 28%),
+    var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-soft);
+}
