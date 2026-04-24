@@ -35,31 +35,50 @@ export async function signupAction(_: ActionState, formData: FormData): Promise<
     return validationError(parsed.error);
   }
 
-  const existing = await db.user.findUnique({
-    where: { email: parsed.data.email.toLowerCase() }
-  });
+  let userEmail = "";
 
-  if (existing) {
+  try {
+    const existing = await db.user.findUnique({
+      where: { email: parsed.data.email.toLowerCase() }
+    });
+
+    if (existing) {
+      return {
+        success: false,
+        message: "An account with that email already exists."
+      };
+    }
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+    const user = await db.user.create({
+      data: {
+        email: parsed.data.email.toLowerCase(),
+        name: parsed.data.name || parsed.data.email.split("@")[0],
+        passwordHash,
+        notificationPreference: {
+          create: {}
+        }
+      }
+    });
+
+    await ensureDefaultCategories(user.id);
+    await createSession({ userId: user.id, email: user.email });
+    userEmail = user.email;
+  } catch (error) {
+    console.error("Signup failed", error);
     return {
       success: false,
-      message: "An account with that email already exists."
+      message: "We couldn't create your account right now. Please try again in a moment."
     };
   }
 
-  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  const user = await db.user.create({
-    data: {
-      email: parsed.data.email.toLowerCase(),
-      name: parsed.data.name || parsed.data.email.split("@")[0],
-      passwordHash,
-      notificationPreference: {
-        create: {}
-      }
-    }
-  });
+  if (!userEmail) {
+    return {
+      success: false,
+      message: "We couldn't create your account right now. Please try again in a moment."
+    };
+  }
 
-  await ensureDefaultCategories(user.id);
-  await createSession({ userId: user.id, email: user.email });
   redirect("/dashboard");
 }
 
@@ -73,27 +92,46 @@ export async function loginAction(_: ActionState, formData: FormData): Promise<A
     return validationError(parsed.error);
   }
 
-  const user = await db.user.findUnique({
-    where: { email: parsed.data.email.toLowerCase() }
-  });
+  let loggedIn = false;
 
-  if (!user) {
+  try {
+    const user = await db.user.findUnique({
+      where: { email: parsed.data.email.toLowerCase() }
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Invalid email or password."
+      };
+    }
+
+    const matches = await bcrypt.compare(parsed.data.password, user.passwordHash);
+
+    if (!matches) {
+      return {
+        success: false,
+        message: "Invalid email or password."
+      };
+    }
+
+    await createSession({ userId: user.id, email: user.email });
+    loggedIn = true;
+  } catch (error) {
+    console.error("Login failed", error);
     return {
       success: false,
-      message: "Invalid email or password."
+      message: "We couldn't log you in right now. Please try again in a moment."
     };
   }
 
-  const matches = await bcrypt.compare(parsed.data.password, user.passwordHash);
-
-  if (!matches) {
+  if (!loggedIn) {
     return {
       success: false,
-      message: "Invalid email or password."
+      message: "We couldn't log you in right now. Please try again in a moment."
     };
   }
 
-  await createSession({ userId: user.id, email: user.email });
   redirect("/dashboard");
 }
 
