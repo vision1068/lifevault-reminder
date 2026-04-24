@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Category, Priority, ReminderStatus } from "@prisma/client";
 
+import { ResetReminderFiltersButton } from "@/components/reset-reminder-filters-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "@/lib/constants";
@@ -18,7 +18,7 @@ export function ReminderFilters({
   };
 
   return (
-    <form className="grid gap-3 rounded-[28px] border bg-[var(--card)] p-5 shadow-sm md:grid-cols-2 xl:grid-cols-4">
+    <form action="/reminders" method="get" className="grid gap-3 rounded-[28px] border bg-[var(--card)] p-5 shadow-sm md:grid-cols-2 xl:grid-cols-4">
       <Input name="search" defaultValue={value("search")} placeholder="Search title, person, vehicle" />
       <select name="category" defaultValue={value("category")} className="h-11 rounded-2xl border bg-[var(--input)] px-4 text-sm">
         <option value="">All categories</option>
@@ -68,9 +68,7 @@ export function ReminderFilters({
         <Button type="submit" className="flex-1">
           Apply filters
         </Button>
-        <Button type="button" variant="outline" className="flex-1" asChild>
-          <Link href="/reminders">Reset</Link>
-        </Button>
+        <ResetReminderFiltersButton />
       </div>
     </form>
   );

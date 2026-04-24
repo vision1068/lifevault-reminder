@@ -3,7 +3,8 @@ import { format } from "date-fns";
 import { ReminderStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
 
-import { deleteReminderAction, markReminderStatusAction } from "@/app/actions";
+import { markReminderStatusAction } from "@/app/actions";
+import { DeleteReminderButton } from "@/components/delete-reminder-button";
 import { PriorityBadge } from "@/components/priority-badge";
 import { RenewDialog } from "@/components/renew-dialog";
 import { StatusBadge } from "@/components/status-badge";
@@ -71,9 +72,7 @@ export default async function ReminderDetailPage({ params }: { params: Promise<{
             <form action={markReminderStatusAction.bind(null, reminder.id, ReminderStatus.ARCHIVED, `/reminders/${reminder.id}`)}>
               <Button variant="outline">Archive</Button>
             </form>
-            <form action={deleteReminderAction.bind(null, reminder.id, "/reminders")}>
-              <Button variant="destructive">Delete</Button>
-            </form>
+            <DeleteReminderButton reminderId={reminder.id} redirectTo="/reminders" />
           </div>
         </CardContent>
       </Card>
