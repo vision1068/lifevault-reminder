@@ -1,6 +1,11 @@
 "use client";
 
-import { deleteReminderAction } from "@/app/actions";
+import { LoaderCircle } from "lucide-react";
+import { useEffect, useTransition } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+import { deleteReminderByIdAction } from "@/app/actions";
 import {
   AlertDialog,
   AlertDialogCancelButton,
@@ -20,6 +25,26 @@ export function DeleteReminderButton({
   reminderId: string;
   redirectTo?: string;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    router.prefetch(redirectTo);
+  }, [redirectTo, router]);
+
+  function handleDelete() {
+    startTransition(async () => {
+      const result = await deleteReminderByIdAction(reminderId);
+
+      if (!result.success) {
+        toast.error(result.message ?? "We couldn't delete that reminder right now.");
+        return;
+      }
+
+      router.replace(redirectTo);
+    });
+  }
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -33,12 +58,17 @@ export function DeleteReminderButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancelButton>Cancel</AlertDialogCancelButton>
-          <form action={deleteReminderAction.bind(null, reminderId, redirectTo)}>
-            <Button type="submit" variant="destructive">
-              Yes, delete
-            </Button>
-          </form>
+          <AlertDialogCancelButton disabled={isPending}>Cancel</AlertDialogCancelButton>
+          <Button disabled={isPending} onClick={handleDelete} type="button" variant="destructive">
+            {isPending ? (
+              <>
+                <LoaderCircle className="size-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Yes, delete"
+            )}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -1,19 +1,14 @@
-import Link from "next/link";
 import { format } from "date-fns";
-import { ReminderStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
 
-import { markReminderStatusAction } from "@/app/actions";
-import { DeleteReminderButton } from "@/components/delete-reminder-button";
 import { PriorityBadge } from "@/components/priority-badge";
-import { RenewDialog } from "@/components/renew-dialog";
+import { ReminderDetailActions } from "@/components/reminder-detail-actions";
 import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { currency } from "@/lib/utils";
-import { getReminderMetrics } from "@/lib/date-utils";
 import { requireUser } from "@/lib/auth";
+import { getReminderMetrics } from "@/lib/date-utils";
 import { db } from "@/lib/db";
+import { currency } from "@/lib/utils";
 
 export default async function ReminderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -61,19 +56,7 @@ export default async function ReminderDetailPage({ params }: { params: Promise<{
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link href={`/reminders/${reminder.id}/edit`}>Edit</Link>
-            </Button>
-            <form action={markReminderStatusAction.bind(null, reminder.id, ReminderStatus.COMPLETED, "/reminders")}>
-              <Button variant="secondary">Mark as completed</Button>
-            </form>
-            <RenewDialog reminderId={reminder.id} />
-            <form action={markReminderStatusAction.bind(null, reminder.id, ReminderStatus.ARCHIVED, "/reminders")}>
-              <Button variant="outline">Archive</Button>
-            </form>
-            <DeleteReminderButton reminderId={reminder.id} redirectTo="/reminders" />
-          </div>
+          <ReminderDetailActions reminderId={reminder.id} />
         </CardContent>
       </Card>
 
@@ -89,9 +72,11 @@ export default async function ReminderDetailPage({ params }: { params: Promise<{
               reminder.renewalHistoryEntries.map((entry) => (
                 <div key={entry.id} className="rounded-2xl border p-4">
                   <p className="font-medium">
-                    {format(entry.oldDate, "dd MMM yyyy")} → {format(entry.newDate, "dd MMM yyyy")}
+                    {format(entry.oldDate, "dd MMM yyyy")} -&gt; {format(entry.newDate, "dd MMM yyyy")}
                   </p>
-                  <p className="text-sm text-[var(--muted-foreground)]">Renewed on {format(entry.renewedOn, "dd MMM yyyy")}</p>
+                  <p className="text-sm text-[var(--muted-foreground)]">
+                    Renewed on {format(entry.renewedOn, "dd MMM yyyy")}
+                  </p>
                   {entry.notes ? <p className="mt-2 text-sm">{entry.notes}</p> : null}
                 </div>
               ))

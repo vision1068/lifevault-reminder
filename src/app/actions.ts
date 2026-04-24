@@ -23,6 +23,11 @@ type ActionState = {
   errors?: Record<string, string[]>;
 };
 
+type MutationResult = {
+  success: boolean;
+  message?: string;
+};
+
 function revalidateUserData(userId: string) {
   revalidateTag(`reminders:${userId}`, "max");
   revalidateTag(`dashboard:${userId}`, "max");
@@ -332,49 +337,22 @@ export async function markReminderStatusAction(
   status: ReminderStatus,
   redirectTo = "/reminders"
 ) {
-  const user = await requireUser();
+  const result = await setReminderStatusAction(reminderId, status);
 
-  try {
-    await db.reminderItem.update({
-      where: {
-        id_userId: {
-          id: reminderId,
-          userId: user.id
-        }
-      },
-      data: {
-        status,
-        completedAt: status === ReminderStatus.COMPLETED ? new Date() : null,
-        archivedAt: status === ReminderStatus.ARCHIVED ? new Date() : null
-      }
-    });
-  } catch (error) {
-    console.error("Mark reminder status failed", { reminderId, userId: user.id, status, error });
+  if (!result.success) {
     redirect("/reminders?error=missing");
   }
 
-  revalidateUserData(user.id);
   redirect(redirectTo);
 }
 
 export async function deleteReminderAction(reminderId: string, redirectTo = "/reminders") {
-  const user = await requireUser();
+  const result = await deleteReminderByIdAction(reminderId);
 
-  try {
-    await db.reminderItem.delete({
-      where: {
-        id_userId: {
-          id: reminderId,
-          userId: user.id
-        }
-      }
-    });
-  } catch (error) {
-    console.error("Delete reminder failed", { reminderId, userId: user.id, error });
+  if (!result.success) {
     redirect("/reminders?error=missing");
   }
 
-  revalidateUserData(user.id);
   redirect(redirectTo);
 }
 
@@ -525,4 +503,57 @@ export async function markReminderActiveAction(reminderId: string, redirectTo = 
 
   revalidateUserData(user.id);
   redirect(redirectTo);
+}
+
+export async function setReminderStatusAction(reminderId: string, status: ReminderStatus): Promise<MutationResult> {
+  const user = await requireUser();
+
+  try {
+    await db.reminderItem.update({
+      where: {
+        id_userId: {
+          id: reminderId,
+          userId: user.id
+        }
+      },
+      data: {
+        status,
+        completedAt: status === ReminderStatus.COMPLETED ? new Date() : null,
+        archivedAt: status === ReminderStatus.ARCHIVED ? new Date() : null
+      }
+    });
+  } catch (error) {
+    console.error("Set reminder status failed", { reminderId, userId: user.id, status, error });
+    return {
+      success: false,
+      message: "We couldn't update that reminder. Please refresh and try again."
+    };
+  }
+
+  revalidateUserData(user.id);
+  return { success: true };
+}
+
+export async function deleteReminderByIdAction(reminderId: string): Promise<MutationResult> {
+  const user = await requireUser();
+
+  try {
+    await db.reminderItem.delete({
+      where: {
+        id_userId: {
+          id: reminderId,
+          userId: user.id
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Delete reminder failed", { reminderId, userId: user.id, error });
+    return {
+      success: false,
+      message: "We couldn't delete that reminder. Please refresh and try again."
+    };
+  }
+
+  revalidateUserData(user.id);
+  return { success: true };
 }
