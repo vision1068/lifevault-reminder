@@ -19,9 +19,21 @@ export async function getDashboardData(userId: string) {
   const today = new Date();
   const reminders = await db.reminderItem.findMany({
     where: { userId },
-    include: {
-      category: true,
+    select: {
+      id: true,
+      title: true,
+      mainDate: true,
+      priority: true,
+      status: true,
+      category: {
+        select: {
+          name: true
+        }
+      },
       renewalHistoryEntries: {
+        select: {
+          id: true
+        },
         orderBy: { renewedOn: "desc" },
         take: 3
       }
@@ -120,7 +132,21 @@ export async function getRemindersForList({ userId, searchParams }: ReminderFilt
 
   const reminders = await db.reminderItem.findMany({
     where,
-    include: { category: true },
+    select: {
+      id: true,
+      title: true,
+      mainDate: true,
+      personName: true,
+      vehicleName: true,
+      priority: true,
+      status: true,
+      category: {
+        select: {
+          name: true,
+          color: true
+        }
+      }
+    },
     orderBy
   });
 
@@ -157,8 +183,16 @@ export async function getHistoryItems(userId: string) {
       }
     },
     include: {
-      category: true,
+      category: {
+        select: {
+          name: true
+        }
+      },
       renewalHistoryEntries: {
+        select: {
+          id: true,
+          renewedOn: true
+        },
         orderBy: { renewedOn: "desc" }
       }
     },
@@ -176,7 +210,11 @@ export async function getCalendarItems(userId: string, month: Date) {
       }
     },
     include: {
-      category: true
+      category: {
+        select: {
+          name: true
+        }
+      }
     },
     orderBy: { mainDate: "asc" }
   });

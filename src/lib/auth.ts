@@ -3,6 +3,7 @@ import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { db } from "@/lib/db";
 
@@ -46,7 +47,7 @@ export async function clearSession() {
   cookieStore.delete(COOKIE_NAME);
 }
 
-export async function getSession() {
+export const getSession = cache(async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
 
@@ -60,9 +61,9 @@ export async function getSession() {
   } catch {
     return null;
   }
-}
+});
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const session = await getSession();
 
   if (!session?.userId) {
@@ -78,7 +79,7 @@ export async function getCurrentUser() {
       createdAt: true
     }
   });
-}
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();

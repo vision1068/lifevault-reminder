@@ -223,6 +223,15 @@ function parseReminderDays(formData: FormData) {
   return [...new Set(selected)].sort((a, b) => a - b);
 }
 
+function parseOptionalNumber(value: FormDataEntryValue | null) {
+  if (value == null || value === "") {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 export async function saveReminderAction(_: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   const reminderBeforeDays = parseReminderDays(formData);
@@ -236,12 +245,12 @@ export async function saveReminderAction(_: ActionState, formData: FormData): Pr
     mainDate: formData.get("mainDate"),
     dateType: formData.get("dateType"),
     reminderBeforeDays,
-    customReminderDays: Number(formData.get("customReminderDays")),
+    customReminderDays: parseOptionalNumber(formData.get("customReminderDays")),
     repeat: formData.get("repeat"),
     priority: formData.get("priority") || Priority.MEDIUM,
     status: formData.get("status") || ReminderStatus.ACTIVE,
     notes: formData.get("notes"),
-    amount: formData.get("amount") === "" ? undefined : Number(formData.get("amount"))
+    amount: parseOptionalNumber(formData.get("amount"))
   });
 
   if (!parsed.success) {
@@ -263,23 +272,31 @@ export async function saveReminderAction(_: ActionState, formData: FormData): Pr
     amount: parsed.data.amount ?? null
   };
 
-  if (parsed.data.id) {
-    await db.reminderItem.update({
-      where: {
-        id_userId: {
-          id: parsed.data.id,
-          userId: user.id
+  try {
+    if (parsed.data.id) {
+      await db.reminderItem.update({
+        where: {
+          id_userId: {
+            id: parsed.data.id,
+            userId: user.id
+          }
+        },
+        data: reminderData
+      });
+    } else {
+      await db.reminderItem.create({
+        data: {
+          userId: user.id,
+          ...reminderData
         }
-      },
-      data: reminderData
-    });
-  } else {
-    await db.reminderItem.create({
-      data: {
-        userId: user.id,
-        ...reminderData
-      }
-    });
+      });
+    }
+  } catch (error) {
+    console.error("Save reminder failed", error);
+    return {
+      success: false,
+      message: "We couldn't save that reminder right now. Please try again."
+    };
   }
 
   revalidatePath("/dashboard");
