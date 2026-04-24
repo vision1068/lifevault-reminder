@@ -1,8 +1,7 @@
 import { EmptyState } from "@/components/empty-state";
 import { ReminderFilters } from "@/components/reminder-filters";
 import { ReminderList } from "@/components/reminder-list";
-import { db } from "@/lib/db";
-import { getRemindersForList } from "@/lib/queries";
+import { getCategoriesForUser, getRemindersForList } from "@/lib/queries";
 import { requireUser } from "@/lib/auth";
 
 export default async function RemindersPage({
@@ -13,11 +12,7 @@ export default async function RemindersPage({
   const user = await requireUser();
   const params = await searchParams;
   const [categories, reminders] = await Promise.all([
-    db.category.findMany({
-      where: { userId: user.id },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true }
-    }),
+    getCategoriesForUser(user.id),
     getRemindersForList({ userId: user.id, searchParams: params })
   ]);
 

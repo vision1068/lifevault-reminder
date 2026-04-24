@@ -6,13 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getIconByName } from "@/lib/icons";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getCategoriesForUser } from "@/lib/queries";
 
 export default async function CategoriesPage() {
   const user = await requireUser();
-  const categories = await db.category.findMany({
-    where: { userId: user.id },
-    orderBy: [{ isActive: "desc" }, { name: "asc" }]
+  const categories = await getCategoriesForUser(user.id);
+  const sortedCategories = [...categories].sort((left, right) => {
+    if (left.isActive === right.isActive) {
+      return left.name.localeCompare(right.name);
+    }
+
+    return left.isActive ? -1 : 1;
   });
 
   return (
@@ -26,7 +30,7 @@ export default async function CategoriesPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {categories.map((category) => {
+        {sortedCategories.map((category) => {
           const Icon = getIconByName(category.iconName);
 
           return (

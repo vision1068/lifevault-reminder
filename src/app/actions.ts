@@ -2,7 +2,7 @@
 
 import { Priority, ReminderStatus, RepeatType } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { clearSession, createSession, requireUser } from "@/lib/auth";
@@ -15,6 +15,14 @@ type ActionState = {
   message?: string;
   errors?: Record<string, string[]>;
 };
+
+function revalidateUserData(userId: string) {
+  revalidateTag(`reminders:${userId}`, "max");
+  revalidateTag(`dashboard:${userId}`, "max");
+  revalidateTag(`history:${userId}`, "max");
+  revalidateTag(`calendar:${userId}`, "max");
+  revalidateTag(`categories:${userId}`, "max");
+}
 
 function validationError(error: { flatten: () => { fieldErrors: Record<string, string[]> } }): ActionState {
   return {
@@ -184,8 +192,8 @@ export async function saveCategoryAction(_: ActionState, formData: FormData): Pr
     });
   }
 
+  revalidateUserData(user.id);
   revalidatePath("/categories");
-  revalidatePath("/dashboard");
 
   return {
     success: true,
@@ -206,6 +214,7 @@ export async function toggleCategoryAction(categoryId: string, isActive: boolean
       isActive
     }
   });
+  revalidateUserData(user.id);
   revalidatePath("/categories");
 }
 
@@ -299,6 +308,7 @@ export async function saveReminderAction(_: ActionState, formData: FormData): Pr
     };
   }
 
+  revalidateUserData(user.id);
   revalidatePath("/dashboard");
   revalidatePath("/reminders");
   revalidatePath("/calendar");
@@ -336,10 +346,7 @@ export async function markReminderStatusAction(
     redirect("/reminders?error=missing");
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/reminders");
-  revalidatePath("/history");
-  revalidatePath(redirectTo);
+  revalidateUserData(user.id);
   redirect(redirectTo);
 }
 
@@ -360,11 +367,7 @@ export async function deleteReminderAction(reminderId: string, redirectTo = "/re
     redirect("/reminders?error=missing");
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/reminders");
-  revalidatePath("/calendar");
-  revalidatePath("/history");
-  revalidatePath(redirectTo);
+  revalidateUserData(user.id);
   redirect(redirectTo);
 }
 
@@ -422,10 +425,8 @@ export async function renewReminderAction(_: ActionState, formData: FormData): P
     };
   }
 
+  revalidateUserData(user.id);
   revalidatePath(`/reminders/${reminder.id}`);
-  revalidatePath("/dashboard");
-  revalidatePath("/history");
-  revalidatePath("/calendar");
 
   return {
     success: true,
@@ -483,8 +484,6 @@ export async function markReminderActiveAction(reminderId: string, redirectTo = 
     redirect("/history?error=missing");
   }
 
-  revalidatePath("/history");
-  revalidatePath("/reminders");
-  revalidatePath(redirectTo);
+  revalidateUserData(user.id);
   redirect(redirectTo);
 }
