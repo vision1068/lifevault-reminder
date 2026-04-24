@@ -313,19 +313,24 @@ export async function saveReminderAction(_: ActionState, formData: FormData): Pr
 export async function markReminderStatusAction(reminderId: string, status: ReminderStatus) {
   const user = await requireUser();
 
-  await db.reminderItem.update({
-    where: {
-      id_userId: {
-        id: reminderId,
-        userId: user.id
+  try {
+    await db.reminderItem.update({
+      where: {
+        id_userId: {
+          id: reminderId,
+          userId: user.id
+        }
+      },
+      data: {
+        status,
+        completedAt: status === ReminderStatus.COMPLETED ? new Date() : null,
+        archivedAt: status === ReminderStatus.ARCHIVED ? new Date() : null
       }
-    },
-    data: {
-      status,
-      completedAt: status === ReminderStatus.COMPLETED ? new Date() : null,
-      archivedAt: status === ReminderStatus.ARCHIVED ? new Date() : null
-    }
-  });
+    });
+  } catch (error) {
+    console.error("Mark reminder status failed", { reminderId, userId: user.id, status, error });
+    redirect("/reminders?error=missing");
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/reminders");
@@ -335,14 +340,19 @@ export async function markReminderStatusAction(reminderId: string, status: Remin
 export async function deleteReminderAction(reminderId: string) {
   const user = await requireUser();
 
-  await db.reminderItem.delete({
-    where: {
-      id_userId: {
-        id: reminderId,
-        userId: user.id
+  try {
+    await db.reminderItem.delete({
+      where: {
+        id_userId: {
+          id: reminderId,
+          userId: user.id
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("Delete reminder failed", { reminderId, userId: user.id, error });
+    redirect("/reminders?error=missing");
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/reminders");
@@ -379,23 +389,31 @@ export async function renewReminderAction(_: ActionState, formData: FormData): P
     };
   }
 
-  await db.$transaction([
-    db.renewalHistory.create({
-      data: {
-        reminderItemId: reminder.id,
-        oldDate: reminder.mainDate,
-        newDate: new Date(parsed.data.newDate),
-        notes: parsed.data.notes || null
-      }
-    }),
-    db.reminderItem.update({
-      where: { id: reminder.id },
-      data: {
-        mainDate: new Date(parsed.data.newDate),
-        status: ReminderStatus.RENEWED
-      }
-    })
-  ]);
+  try {
+    await db.$transaction([
+      db.renewalHistory.create({
+        data: {
+          reminderItemId: reminder.id,
+          oldDate: reminder.mainDate,
+          newDate: new Date(parsed.data.newDate),
+          notes: parsed.data.notes || null
+        }
+      }),
+      db.reminderItem.update({
+        where: { id: reminder.id },
+        data: {
+          mainDate: new Date(parsed.data.newDate),
+          status: ReminderStatus.RENEWED
+        }
+      })
+    ]);
+  } catch (error) {
+    console.error("Renew reminder failed", { reminderId: reminder.id, userId: user.id, error });
+    return {
+      success: false,
+      message: "We couldn't renew that reminder right now. Please refresh and try again."
+    };
+  }
 
   revalidatePath(`/reminders/${reminder.id}`);
   revalidatePath("/dashboard");
@@ -438,20 +456,25 @@ export async function updateProfileAction(_: ActionState, formData: FormData): P
 export async function markReminderActiveAction(reminderId: string) {
   const user = await requireUser();
 
-  await db.reminderItem.update({
-    where: {
-      id_userId: {
-        id: reminderId,
-        userId: user.id
+  try {
+    await db.reminderItem.update({
+      where: {
+        id_userId: {
+          id: reminderId,
+          userId: user.id
+        }
+      },
+      data: {
+        status: ReminderStatus.ACTIVE,
+        completedAt: null,
+        archivedAt: null,
+        repeat: RepeatType.NONE
       }
-    },
-    data: {
-      status: ReminderStatus.ACTIVE,
-      completedAt: null,
-      archivedAt: null,
-      repeat: RepeatType.NONE
-    }
-  });
+    });
+  } catch (error) {
+    console.error("Restore reminder failed", { reminderId, userId: user.id, error });
+    redirect("/history?error=missing");
+  }
 
   revalidatePath("/history");
   revalidatePath("/reminders");
