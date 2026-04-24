@@ -3,7 +3,6 @@
 import { deleteReminderAction } from "@/app/actions";
 import {
   AlertDialog,
-  AlertDialogActionButton,
   AlertDialogCancelButton,
   AlertDialogContent,
   AlertDialogDescription,
@@ -36,7 +35,9 @@ export function DeleteReminderButton({
         <AlertDialogFooter>
           <AlertDialogCancelButton>Cancel</AlertDialogCancelButton>
           <form action={deleteReminderAction.bind(null, reminderId, redirectTo)}>
-            <AlertDialogActionButton type="submit">Yes, delete</AlertDialogActionButton>
+            <Button type="submit" variant="destructive">
+              Yes, delete
+            </Button>
           </form>
         </AlertDialogFooter>
       </AlertDialogContent>
