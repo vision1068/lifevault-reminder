@@ -1,5 +1,3 @@
-import "server-only";
-
 import nodemailer from "nodemailer";
 import { format } from "date-fns";
 
