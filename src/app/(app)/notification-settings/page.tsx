@@ -13,7 +13,7 @@ export default async function NotificationSettingsPage() {
   const user = await requireUser();
   const preference = await db.notificationPreference.findUnique({
     where: { userId: user.id },
-    select: { emailEnabled: true }
+    select: { emailEnabled: true, emailReminderTime: true, emailTimeZone: true }
   });
 
   return (
@@ -27,7 +27,12 @@ export default async function NotificationSettingsPage() {
           <CardTitle>Live channels</CardTitle>
         </CardHeader>
         <CardContent>
-          <NotificationSettingsForm email={user.email} emailEnabled={preference?.emailEnabled ?? false} />
+          <NotificationSettingsForm
+            email={user.email}
+            emailEnabled={preference?.emailEnabled ?? false}
+            emailReminderTime={preference?.emailReminderTime ?? "12:00"}
+            emailTimeZone={preference?.emailTimeZone ?? "Asia/Riyadh"}
+          />
         </CardContent>
       </Card>
       <Card>

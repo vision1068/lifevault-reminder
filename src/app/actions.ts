@@ -453,7 +453,9 @@ export async function updateNotificationSettingsAction(
 ): Promise<ActionState> {
   const user = await requireUser();
   const parsed = notificationPreferencesSchema.safeParse({
-    emailEnabled: formData.get("emailEnabled") === "on"
+    emailEnabled: formData.get("emailEnabled") === "on",
+    emailReminderTime: formData.get("emailReminderTime"),
+    emailTimeZone: formData.get("emailTimeZone")
   });
 
   if (!parsed.success) {
@@ -463,11 +465,15 @@ export async function updateNotificationSettingsAction(
   await db.notificationPreference.upsert({
     where: { userId: user.id },
     update: {
-      emailEnabled: parsed.data.emailEnabled
+      emailEnabled: parsed.data.emailEnabled,
+      emailReminderTime: parsed.data.emailReminderTime,
+      emailTimeZone: parsed.data.emailTimeZone
     },
     create: {
       userId: user.id,
-      emailEnabled: parsed.data.emailEnabled
+      emailEnabled: parsed.data.emailEnabled,
+      emailReminderTime: parsed.data.emailReminderTime,
+      emailTimeZone: parsed.data.emailTimeZone
     }
   });
 
@@ -475,11 +481,14 @@ export async function updateNotificationSettingsAction(
 
   return {
     success: true,
-    message: parsed.data.emailEnabled ? "Email reminders enabled." : "Email reminders disabled."
+    message: parsed.data.emailEnabled
+      ? `Email reminders enabled for ${parsed.data.emailReminderTime} (${parsed.data.emailTimeZone}).`
+      : "Email reminders disabled."
   };
 }
 
-export async function sendMyDueReminderEmailsAction(): Promise<ActionState> {
+export async function sendMyDueReminderEmailsAction(previousState: ActionState): Promise<ActionState> {
+  void previousState;
   const user = await requireUser();
 
   try {

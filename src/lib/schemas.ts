@@ -48,5 +48,9 @@ export const profileSchema = z.object({
 });
 
 export const notificationPreferencesSchema = z.object({
-  emailEnabled: z.boolean().default(false)
+  emailEnabled: z.boolean().default(false),
+  emailReminderTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Choose a valid daily reminder time."),
+  emailTimeZone: z.string().min(1, "Choose a timezone.")
 });

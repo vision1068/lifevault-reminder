@@ -113,3 +113,18 @@ export const REPEAT_OPTIONS = [
   { value: "MONTHLY", label: "Monthly" },
   { value: "YEARLY", label: "Yearly" }
 ] as const;
+
+export const NOTIFICATION_TIMEZONE_OPTIONS = [
+  { value: "Asia/Riyadh", label: "Asia/Riyadh" },
+  { value: "Asia/Dubai", label: "Asia/Dubai" },
+  { value: "Asia/Qatar", label: "Asia/Qatar" },
+  { value: "Asia/Kuwait", label: "Asia/Kuwait" },
+  { value: "Asia/Bahrain", label: "Asia/Bahrain" },
+  { value: "Asia/Muscat", label: "Asia/Muscat" },
+  { value: "Asia/Karachi", label: "Asia/Karachi" },
+  { value: "Asia/Kolkata", label: "Asia/Kolkata" },
+  { value: "Asia/Singapore", label: "Asia/Singapore" },
+  { value: "Australia/Sydney", label: "Australia/Sydney" },
+  { value: "Europe/London", label: "Europe/London" },
+  { value: "UTC", label: "UTC" }
+] as const;

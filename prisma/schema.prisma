@@ -116,6 +116,8 @@ model NotificationPreference {
   id                     String   @id @default(cuid())
   userId                 String   @unique
   emailEnabled           Boolean  @default(false)
+  emailReminderTime      String   @default("12:00")
+  emailTimeZone          String   @default("Asia/Riyadh")
   pushEnabled            Boolean  @default(false)
   whatsappEnabled        Boolean  @default(false)
   googleCalendarEnabled  Boolean  @default(false)

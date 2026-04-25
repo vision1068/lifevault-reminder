@@ -13,9 +13,48 @@ type ProcessorResult = {
   errors: number;
 };
 
+const SCHEDULE_INTERVAL_MINUTES = 5;
+
 function normalizeReminderDays(raw: unknown) {
   if (!Array.isArray(raw)) return [];
   return raw.map(Number).filter((value) => Number.isFinite(value) && value >= 0);
+}
+
+function getLocalDateParts(date: Date, timeZone: string) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
+
+  const parts = formatter.formatToParts(date);
+  const lookup = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
+
+  return {
+    year: Number(lookup.year),
+    month: Number(lookup.month),
+    day: Number(lookup.day),
+    hour: Number(lookup.hour),
+    minute: Number(lookup.minute)
+  };
+}
+
+function isScheduledTimeDue(emailReminderTime: string, emailTimeZone: string, referenceDate: Date) {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(emailReminderTime);
+
+  if (!match) {
+    return false;
+  }
+
+  const targetMinutes = Number(match[1]) * 60 + Number(match[2]);
+  const current = getLocalDateParts(referenceDate, emailTimeZone);
+  const currentMinutes = current.hour * 60 + current.minute;
+
+  return currentMinutes >= targetMinutes && currentMinutes < targetMinutes + SCHEDULE_INTERVAL_MINUTES;
 }
 
 async function sendDueEmailsForUser(user: {
@@ -113,7 +152,9 @@ export async function processDueEmailRemindersForUser(userId: string, referenceD
       name: true,
       notificationPreference: {
         select: {
-          emailEnabled: true
+          emailEnabled: true,
+          emailReminderTime: true,
+          emailTimeZone: true
         }
       },
       reminders: {
@@ -157,6 +198,12 @@ export async function processDueEmailReminders(referenceDate = new Date()): Prom
       id: true,
       email: true,
       name: true,
+      notificationPreference: {
+        select: {
+          emailReminderTime: true,
+          emailTimeZone: true
+        }
+      },
       reminders: {
         where: {
           status: {
@@ -185,6 +232,13 @@ export async function processDueEmailReminders(referenceDate = new Date()): Prom
   let errors = 0;
 
   for (const user of eligibleUsers) {
+    const timePreference = user.notificationPreference?.emailReminderTime ?? "12:00";
+    const timeZonePreference = user.notificationPreference?.emailTimeZone ?? "Asia/Riyadh";
+
+    if (!isScheduledTimeDue(timePreference, timeZonePreference, referenceDate)) {
+      continue;
+    }
+
     const result = await sendDueEmailsForUser(user, today);
     checked += result.checked;
     sent += result.sent;

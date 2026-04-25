@@ -6,13 +6,18 @@ import { toast } from "sonner";
 import { sendMyDueReminderEmailsAction, updateNotificationSettingsAction } from "@/app/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
+import { NOTIFICATION_TIMEZONE_OPTIONS } from "@/lib/constants";
 
 export function NotificationSettingsForm({
   email,
-  emailEnabled
+  emailEnabled,
+  emailReminderTime,
+  emailTimeZone
 }: {
   email: string;
   emailEnabled: boolean;
+  emailReminderTime: string;
+  emailTimeZone: string;
 }) {
   const [state, formAction] = useActionState(updateNotificationSettingsAction, {});
   const [sendState, sendAction, sendPending] = useActionState(sendMyDueReminderEmailsAction, {});
@@ -55,6 +60,36 @@ export function NotificationSettingsForm({
               Enabled
             </label>
           </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="space-y-2">
+            <span className="text-sm font-medium">Daily check time</span>
+            <input
+              type="time"
+              name="emailReminderTime"
+              defaultValue={emailReminderTime}
+              step="300"
+              className="h-11 w-full rounded-2xl border bg-transparent px-4 outline-none ring-0"
+            />
+            <p className="text-xs text-[var(--muted-foreground)]">Default: 12:00 PM. The scheduler checks every 5 minutes.</p>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-medium">Timezone</span>
+            <select
+              name="emailTimeZone"
+              defaultValue={emailTimeZone}
+              className="h-11 w-full rounded-2xl border bg-transparent px-4 outline-none ring-0"
+            >
+              {NOTIFICATION_TIMEZONE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-[var(--muted-foreground)]">Your reminder emails will use this local time.</p>
+          </label>
         </div>
 
         <SubmitButton>Save notification settings</SubmitButton>

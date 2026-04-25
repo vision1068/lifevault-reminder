@@ -110,8 +110,10 @@ Add these environment variables:
 - `SMTP_PASS`
 - `EMAIL_FROM`
 - `CRON_SECRET`
+- `APP_URL` (recommended for scheduled function callbacks)
 
 Enable email reminders from the in-app Notification Settings page.
+By default, email checks are scheduled for `12:00 PM` in `Asia/Riyadh`, and users can change both the time and timezone in settings.
 
 To process due reminders automatically, call:
 
@@ -125,6 +127,32 @@ with either:
 - or `x-cron-secret: YOUR_CRON_SECRET`
 
 The route sends a general reminder email when a reminder reaches one of its configured reminder-before days.
+
+## Automatic daily email schedule on Netlify
+
+This app includes a Netlify Scheduled Function at:
+
+- `netlify/functions/email-reminders-scheduled.mts`
+
+It runs every 5 minutes in UTC and only sends emails for users whose configured local reminder time matches that run window.
+
+Important:
+
+- Netlify scheduled functions only run on published deploys.
+- Netlify cron expressions run in UTC.
+- The app handles user local time by comparing the scheduled run against each user’s saved timezone and daily reminder time.
+
+After pulling this version:
+
+```bash
+pnpm prisma:migrate --name add_notification_schedule_fields
+```
+
+Then redeploy Netlify with:
+
+- `CRON_SECRET`
+- `APP_URL`
+- your SMTP variables
 
 ## Supabase setup notes
 
