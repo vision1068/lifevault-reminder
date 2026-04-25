@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { clearSession, createSession, requireUser } from "@/lib/auth";
 import { ensureDefaultCategories } from "@/lib/category-service";
 import { db } from "@/lib/db";
+import { processDueEmailRemindersForUser } from "@/lib/email-reminders";
 import {
   authSchema,
   categorySchema,
@@ -476,6 +477,39 @@ export async function updateNotificationSettingsAction(
     success: true,
     message: parsed.data.emailEnabled ? "Email reminders enabled." : "Email reminders disabled."
   };
+}
+
+export async function sendMyDueReminderEmailsAction(): Promise<ActionState> {
+  const user = await requireUser();
+
+  try {
+    const result = await processDueEmailRemindersForUser(user.id);
+
+    if (result.sent > 0) {
+      return {
+        success: true,
+        message: `Sent ${result.sent} reminder email${result.sent === 1 ? "" : "s"} to ${user.email}.`
+      };
+    }
+
+    if (result.skipped > 0) {
+      return {
+        success: true,
+        message: "Today's due reminder email has already been sent."
+      };
+    }
+
+    return {
+      success: true,
+      message: "No email reminders are due for your account right now."
+    };
+  } catch (error) {
+    console.error("Send due reminder emails failed", { userId: user.id, error });
+    return {
+      success: false,
+      message: "We couldn't send reminder emails right now. Please try again."
+    };
+  }
 }
 
 export async function markReminderActiveAction(reminderId: string, redirectTo = "/history") {
