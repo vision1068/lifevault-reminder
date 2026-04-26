@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
-import { BellRing, CalendarRange, Grid2x2, FolderCog, History, LayoutDashboard, Plus, UserCircle2 } from "lucide-react";
+import { BellRing, CalendarRange, Grid2x2, FolderCog, LayoutDashboard, Plus } from "lucide-react";
 
 import { logoutAction } from "@/app/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -16,9 +16,7 @@ const navItems = [
   { href: "/reminders", label: "Reminders", icon: BellRing },
   { href: "/calendar", label: "Calendar", icon: CalendarRange },
   { href: "/categories", label: "Categories", icon: Grid2x2 },
-  { href: "/history", label: "History", icon: History },
-  { href: "/notification-settings", label: "Settings", icon: FolderCog },
-  { href: "/profile", label: "Profile", icon: UserCircle2 }
+  { href: "/settings", label: "Settings", icon: FolderCog }
 ];
 
 export function AppShell({
@@ -106,7 +104,7 @@ export function AppShell({
 
       <nav className="fixed inset-x-4 bottom-4 z-40 rounded-[28px] border bg-[var(--card)] p-2 shadow-2xl lg:hidden">
         <div className="grid grid-cols-5 gap-1">
-          {navItems.slice(0, 5).map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = pathname.startsWith(item.href);
             return (
